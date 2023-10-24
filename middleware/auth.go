@@ -3,6 +3,7 @@ package middleware
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -18,13 +19,14 @@ type jwtCustomClaims struct {
 
 func CreateToken(userId int, name string) string {
 	var payloadParser jwtCustomClaims
+	SecretKey := os.Getenv("JWT_KEY")
 
 	payloadParser.ID = uint(userId)
 	payloadParser.Name = name
 	payloadParser.ExpiresAt = jwt.NewNumericDate(time.Now().Add(time.Minute * 60))
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payloadParser)
-	t, _ := token.SignedString([]byte("1234"))
+	t, _ := token.SignedString([]byte(SecretKey))
 	return t
 }
 
