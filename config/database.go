@@ -36,7 +36,7 @@ func ConnectDB() {
 		panic("Failed to Connect Database")
 	}
 
-    InitMigrate()
+	InitMigrate()
 
 	fmt.Println("Connected to Database")
 }

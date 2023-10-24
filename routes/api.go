@@ -4,11 +4,14 @@ import (
 	"app/controller"
 	"app/middleware"
 	"net/http"
+	"os"
 
+	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 )
 
 func Init() *echo.Echo {
+	SecretKey := os.Getenv("JWT_KEY")
 
 	e := echo.New()
 
@@ -18,12 +21,16 @@ func Init() *echo.Echo {
 		return c.String(http.StatusOK, "Welcome to RESTful API Services")
 	})
 
-	//e.GET("/users", controller.GetAllUser)
-	//e.GET("/users/:id", controller.GetUserByID)
+	// Authenticated
+	eAuth := e.Group("")
+	eAuth.Use(echojwt.JWT([]byte(SecretKey)))
+
 	e.POST("/users/register", controller.Register)
 	e.POST("/users/login", controller.Login)
-	//e.PUT("/users/:id", controller.UpdateUser)
-	//e.DELETE("/users/:id", controller.DeleteUser)
+	eAuth.GET("/users", controller.GetAllUser)
+	eAuth.GET("/users/:id", controller.GetUserByID)
+	eAuth.PUT("/users/:id", controller.UpdateUser)
+	eAuth.DELETE("/users/:id", controller.DeleteUser)
 
 	return e
 

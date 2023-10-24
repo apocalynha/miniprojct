@@ -8,9 +8,45 @@ import (
 	"app/utils"
 	"app/utils/req"
 	"app/utils/res"
-	"github.com/labstack/echo/v4"
 	"net/http"
+	"strconv"
+
+	"github.com/labstack/echo/v4"
 )
+
+func GetAllUser(c echo.Context) error {
+	var users []model.User
+
+	err := config.DB.Find(&users).Error
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, utils.ErrorResponse("Failed to retrieve user"))
+	}
+
+	if len(users) == 0 {
+		return c.JSON(http.StatusNotFound, utils.ErrorResponse("Empty data"))
+	}
+
+	response := res.ConvertIndex(users)
+
+	return c.JSON(http.StatusOK, utils.SuccessResponse("User data successfully retrieved", response))
+}
+
+func GetUserByID(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid ID"))
+	}
+
+	var user model.User
+
+	if err := config.DB.First(&user, id).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, utils.ErrorResponse("Failed to retrieve user"))
+	}
+
+	response := res.ConvertGeneral(&user)
+
+	return c.JSON(http.StatusOK, utils.SuccessResponse("User data successfully retrieved", response))
+}
 
 func Register(c echo.Context) error {
 	var user web.UserRequest
@@ -50,7 +86,10 @@ func Login(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Invalid login credentials"))
 	}
 
-	token := middleware.CreateToken(int(user.ID), user.Name)
+	token, err := middleware.CreateToken(int(user.ID), user.Name, user.Role)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, utils.ErrorResponse("Failed to create token"))
+	}
 
 	// Buat respons dengan data yang diminta
 	response := web.UserLoginResponse{
@@ -60,4 +99,52 @@ func Login(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, utils.SuccessResponse("Login successful", response))
+}
+
+func UpdateUser(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid ID"))
+	}
+
+	var updatedUser model.User
+
+	if err := c.Bind(&updatedUser); err != nil {
+		return c.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid request body"))
+	}
+
+	var existingUser model.User
+	result := config.DB.First(&existingUser, id)
+	if result.Error != nil {
+		return c.JSON(http.StatusInternalServerError, utils.ErrorResponse("Failed to retrieve user"))
+	}
+
+	config.DB.Model(&existingUser).Updates(updatedUser)
+
+	response := res.ConvertGeneral(&existingUser)
+
+	return c.JSON(http.StatusOK, utils.SuccessResponse("User data successfully updated", response))
+}
+
+func DeleteUser(c echo.Context) error {
+
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid ID"))
+	}
+
+	var existingUser model.User
+	result := config.DB.First(&existingUser, id)
+	if result.Error != nil {
+		return c.JSON(http.StatusInternalServerError, utils.ErrorResponse("Failed to retrieve user"))
+	}
+
+	role := middleware.ExtractTokenUserRole(c)
+	if role != "admin" {
+		return c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Permission denied"))
+	}
+
+	config.DB.Delete(&existingUser)
+
+	return c.JSON(http.StatusOK, utils.SuccessResponse("User data successfully deleted", nil))
 }
