@@ -79,11 +79,11 @@ func Login(c echo.Context) error {
 
 	var user model.User
 	if err := config.DB.Where("email = ?", loginRequest.Email).First(&user).Error; err != nil {
-		return c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Invalid login credentials"))
+		return c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Invalid email login credentials"))
 	}
 
 	if err := middleware.ComparePassword(user.Password, loginRequest.Password); err != nil {
-		return c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Invalid login credentials"))
+		return c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Invalid password login credentials"))
 	}
 
 	token, err := middleware.CreateToken(int(user.ID), user.Name, user.Role)
