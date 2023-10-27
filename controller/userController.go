@@ -109,6 +109,13 @@ func UpdateUser(c echo.Context) error {
 
 	var updatedUser model.User
 
+	role := middleware.ExtractTokenUserRole(c)
+	userId := middleware.ExtractTokenUserId(c)
+
+	if role != "admin" && userId != id {
+		return c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Permission denied"))
+	}
+
 	if err := c.Bind(&updatedUser); err != nil {
 		return c.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid request body"))
 	}
