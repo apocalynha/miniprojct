@@ -40,6 +40,13 @@ func Init() *echo.Echo {
 	eAuth.PUT("/news/:id", controller.UpdateNews)
 	eAuth.DELETE("/news/:id", controller.DeleteNews)
 
+	// contest
+	e.GET("/contest", controller.GetContests)
+	e.GET("/contest/:id", controller.GetContestID)
+	eAuth.POST("/contest/create", controller.CreateContest)
+	eAuth.PUT("/contest/:id", controller.UpdateContest)
+	eAuth.DELETE("/contest/:id", controller.DeleteContest)
+
 	return e
 
 }
