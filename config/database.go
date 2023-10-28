@@ -45,5 +45,6 @@ func InitMigrate() {
 	DB.AutoMigrate(
 		&model.User{},
 		&model.News{},
+		&model.Contest{},
 	)
 }
