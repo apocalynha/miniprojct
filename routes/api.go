@@ -47,6 +47,9 @@ func Init() *echo.Echo {
 	eAuth.PUT("/contest/:id", controller.UpdateContest)
 	eAuth.DELETE("/contest/:id", controller.DeleteContest)
 
+	// ai
+	eAuth.POST("/contest-recommend", controller.GetContestRecommendation)
+
 	return e
 
 }
