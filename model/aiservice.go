@@ -5,16 +5,11 @@ type ContestRequest struct {
 	Category string `json:"category"`
 }
 
-type ContestRecommendation struct {
+type AIResponse struct {
 	Status string `json:"status"`
 	Data   string `json:"data"`
 }
 
 type ChatRequest struct {
 	ContestName string `json:"contest_name"`
-}
-
-type ChatResponseAI struct {
-	Status string `json:"status"`
-	Data   string `json:"data"`
 }

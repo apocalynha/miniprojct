@@ -57,7 +57,58 @@ func GetContestRecommendation(c echo.Context) error {
 	}
 	recommendation := resp.Choices[0].Message.Content
 
-	response := model.ContestRecommendation{
+	response := model.AIResponse{
+		Status: "success",
+		Data:   recommendation,
+	}
+
+	return c.JSON(http.StatusOK, response)
+}
+
+func GetContestExplanation(c echo.Context) error {
+	OpenAI_Key := os.Getenv("API_OPENAI")
+
+	role := middleware.ExtractTokenUserRole(c)
+	if role != "admin" {
+		return c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Permission denied"))
+	}
+
+	var reqData model.ChatRequest
+
+	body, err := ioutil.ReadAll(c.Request().Body)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid JSON"})
+	}
+
+	if err := json.Unmarshal(body, &reqData); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid JSON"})
+	}
+
+	client := openai.NewClient(OpenAI_Key)
+	resp, err := client.CreateChatCompletion(
+		context.Background(),
+		openai.ChatCompletionRequest{
+			Model: openai.GPT3Dot5Turbo,
+			Messages: []openai.ChatCompletionMessage{
+				{
+					Role:    openai.ChatMessageRoleSystem,
+					Content: "Anda merupakan asisten yang dapat membantu untuk memberikan penjelasan lomba.",
+				},
+				{
+					Role:    openai.ChatMessageRoleUser,
+					Content: fmt.Sprintf("Berikan penjelasan dan aturan dari lomba %s .", reqData.ContestName),
+				},
+			},
+		},
+	)
+
+	if err != nil {
+		fmt.Printf("ChatCompletion error: %v\n", err)
+		return err
+	}
+	recommendation := resp.Choices[0].Message.Content
+
+	response := model.AIResponse{
 		Status: "success",
 		Data:   recommendation,
 	}
