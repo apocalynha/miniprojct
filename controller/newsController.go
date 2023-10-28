@@ -54,7 +54,13 @@ func GetNews(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, utils.ErrorResponse("Failed to fetch news"))
 	}
 
-	return c.JSON(http.StatusOK, utils.SuccessResponse("Success get all blogs", news))
+	var responseList []utils.ShowNewsResponse
+	for _, n := range news {
+		response := utils.GetNewsResponse(n)
+		responseList = append(responseList, response)
+	}
+
+	return c.JSON(http.StatusOK, utils.SuccessResponse("Success get all news", responseList))
 }
 
 // Get news by id
@@ -71,7 +77,21 @@ func GetNewsID(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, utils.ErrorResponse("Failed to fetch News ID"))
 	}
 
-	return c.JSON(http.StatusOK, utils.SuccessResponse("Success", news))
+	response := utils.ShowNewsResponse{
+		ID:        news.ID,
+		UpdatedAt: news.UpdatedAt.String(),
+		User: struct {
+			Name string `json:"name"`
+			Role string `json:"role"`
+		}{
+			Name: news.User.Name,
+			Role: news.User.Role,
+		},
+		Tittle:  news.Tittle,
+		Content: news.Content,
+	}
+
+	return c.JSON(http.StatusOK, utils.SuccessResponse("Success get news by ID", response))
 }
 
 // Update News

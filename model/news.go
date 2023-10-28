@@ -15,7 +15,7 @@ type News struct {
 
 type NewsResponse struct {
 	ID        uint      `json:"id"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	UpdatedAt time.Time `json:"updated_at"`
 	User      User      `json:"user" ` // Explicitly define the foreign key
 	Tittle    string    `json:"tittle" `
 	Content   string    `json:"content"`
