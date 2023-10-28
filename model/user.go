@@ -10,7 +10,7 @@ type User struct {
 	Name      string
 	Email     string
 	Password  string
-	Role      string `json:"role" gorm:"type:enum('customer','admin');default:'customer'"`
+	Role      string `json:"role" gorm:"type:enum('user','admin');default:'user'"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`

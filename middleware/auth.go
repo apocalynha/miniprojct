@@ -39,7 +39,7 @@ func ExtractTokenUserRole(e echo.Context) string {
 		role := claims["role"].(string)
 		return role
 	}
-	return "customer"
+	return "user"
 }
 
 func ExtractTokenUserId(e echo.Context) int {
