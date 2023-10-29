@@ -4,6 +4,7 @@ import (
 	"app/config"
 	"app/middleware"
 	"app/model"
+	"app/service"
 	"app/utils"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
@@ -25,6 +26,9 @@ func CreateNews(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid request body"))
 	}
 
+	fileheader := "photo"
+	NewNews.Photo = service.CloudinaryUpload(c, fileheader)
+
 	var user model.User
 	if err := config.DB.First(&user, userId).Error; err != nil {
 		return c.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid User ID"))
@@ -34,7 +38,7 @@ func CreateNews(c echo.Context) error {
 
 	result := config.DB.Create(&NewNews)
 	if result.Error != nil {
-		return c.JSON(http.StatusInternalServerError, utils.ErrorResponse("Failed to create blog post"))
+		return c.JSON(http.StatusInternalServerError, utils.ErrorResponse("Failed to create news post"))
 	}
 
 	response := utils.GetNewsResponse(NewNews)
@@ -64,7 +68,6 @@ func GetNews(c echo.Context) error {
 func GetNewsID(c echo.Context) error {
 	NewsID, _ := strconv.Atoi(c.Param("id"))
 
-	// Fetch the blogs by their ID from the database using GORM
 	var news model.News
 	result := config.DB.Preload("User").First(&news, NewsID)
 	if result.Error != nil {
@@ -102,7 +105,7 @@ func UpdateNews(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, utils.SuccessResponse("Success update blog", utils.GetNewsResponse(news)))
+	return c.JSON(http.StatusOK, utils.SuccessResponse("Success update news", utils.GetNewsResponse(news)))
 }
 
 // Delete News
@@ -128,6 +131,6 @@ func DeleteNews(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"message": "success delete blog",
+		"message": "success delete news",
 	})
 }
