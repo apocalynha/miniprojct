@@ -22,9 +22,9 @@ func GetContests(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, utils.ErrorResponse("No contests available"))
 	}
 
-	response := make([]model.ContestResponse, len(contests))
+	response := make([]utils.ContestResponse, len(contests))
 	for i, contest := range contests {
-		response[i] = contest.ResponseConvert()
+		response[i] = utils.GetContestResponse(contest)
 	}
 
 	return c.JSON(http.StatusOK, utils.SuccessResponse("Contest data successfully retrieved", response))
@@ -42,28 +42,28 @@ func GetContestID(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, utils.ErrorResponse("Failed to retrieve contest"))
 	}
 
-	response := contest.ResponseConvert()
+	response := utils.GetContestResponse(contest)
 
 	return c.JSON(http.StatusOK, utils.SuccessResponse("Contest data successfully retrieved", response))
 }
 
 func CreateContest(c echo.Context) error {
-	var contestRequest model.Contest
+	var NewContest model.Contest
 
 	role := middleware.ExtractTokenUserRole(c)
 	if role != "admin" {
 		return c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Permission denied"))
 	}
 
-	if err := c.Bind(&contestRequest); err != nil {
+	if err := c.Bind(&NewContest); err != nil {
 		return c.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid request body"))
 	}
 
-	if err := config.DB.Create(&contestRequest).Error; err != nil {
+	if err := config.DB.Create(&NewContest).Error; err != nil {
 		return c.JSON(http.StatusInternalServerError, utils.ErrorResponse("Failed to create contest"))
 	}
 
-	response := contestRequest.ResponseConvert()
+	response := utils.GetContestResponse(NewContest)
 
 	return c.JSON(http.StatusCreated, utils.SuccessResponse("Contest successfully created", response))
 }
@@ -74,26 +74,26 @@ func UpdateContest(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid Contest ID"))
 	}
 
-	var updatedContest model.Contest
+	var UpdatedContest model.Contest
 
 	role := middleware.ExtractTokenUserRole(c)
 	if role != "admin" {
 		return c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Permission denied"))
 	}
 
-	if err := c.Bind(&updatedContest); err != nil {
+	if err := c.Bind(&UpdatedContest); err != nil {
 		return c.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid request body"))
 	}
 
-	var existingContest model.Contest
-	result := config.DB.First(&existingContest, id)
+	var ExistingContest model.Contest
+	result := config.DB.First(&ExistingContest, id)
 	if result.Error != nil {
 		return c.JSON(http.StatusInternalServerError, utils.ErrorResponse("Failed to retrieve contest"))
 	}
 
-	config.DB.Model(&existingContest).Updates(updatedContest)
+	config.DB.Model(&ExistingContest).Updates(UpdatedContest)
 
-	response := existingContest.ResponseConvert()
+	response := utils.GetContestResponse(ExistingContest)
 
 	return c.JSON(http.StatusOK, utils.SuccessResponse("Contest data successfully updated", response))
 }

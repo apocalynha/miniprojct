@@ -57,9 +57,9 @@ func GetContestRecommendation(c echo.Context) error {
 	}
 	recommendation := resp.Choices[0].Message.Content
 
-	response := model.AIResponse{
-		Status: "success",
-		Data:   recommendation,
+	response := utils.TResponseMeta{
+		Success: true,
+		Message: recommendation,
 	}
 
 	return c.JSON(http.StatusOK, response)
@@ -108,9 +108,9 @@ func GetContestExplanation(c echo.Context) error {
 	}
 	recommendation := resp.Choices[0].Message.Content
 
-	response := model.AIResponse{
-		Status: "success",
-		Data:   recommendation,
+	response := utils.TResponseMeta{
+		Success: true,
+		Message: recommendation,
 	}
 
 	return c.JSON(http.StatusOK, response)

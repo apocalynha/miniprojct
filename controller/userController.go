@@ -8,6 +8,7 @@ import (
 	"app/utils"
 	"app/utils/req"
 	"app/utils/res"
+	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"strconv"
 
@@ -93,9 +94,8 @@ func Login(c echo.Context) error {
 
 	// Buat respons dengan data yang diminta
 	response := web.UserLoginResponse{
-		Email:    user.Email,
-		Password: middleware.HashPassword(loginRequest.Password),
-		Token:    token,
+		Email: user.Email,
+		Token: token,
 	}
 
 	return c.JSON(http.StatusOK, utils.SuccessResponse("Login successful", response))
@@ -124,6 +124,19 @@ func UpdateUser(c echo.Context) error {
 	result := config.DB.First(&existingUser, id)
 	if result.Error != nil {
 		return c.JSON(http.StatusInternalServerError, utils.ErrorResponse("Failed to retrieve user"))
+	}
+
+	if updatedUser.Password != "" {
+		// Hash new password
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(updatedUser.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, utils.ErrorResponse("Failed to hash the password"))
+		}
+
+		updatedUser.Password = string(hashedPassword)
+	} else {
+		// If the password is not changed, use the existing password in the database
+		updatedUser.Password = existingUser.Password
 	}
 
 	config.DB.Model(&existingUser).Updates(updatedUser)
