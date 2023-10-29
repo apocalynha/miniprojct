@@ -67,12 +67,7 @@ func GetContestRecommendation(c echo.Context) error {
 
 func GetContestExplanation(c echo.Context) error {
 	OpenAI_Key := os.Getenv("APIOPENAI")
-
-	role := middleware.ExtractTokenUserRole(c)
-	if role != "admin" {
-		return c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Permission denied"))
-	}
-
+	
 	var reqData model.ChatRequest
 
 	body, err := ioutil.ReadAll(c.Request().Body)
