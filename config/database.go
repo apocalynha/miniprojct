@@ -42,5 +42,10 @@ func ConnectDB() {
 }
 
 func InitMigrate() {
-	DB.AutoMigrate(&model.User{})
+	DB.AutoMigrate(
+		&model.User{},
+		&model.News{},
+		&model.Contest{},
+		&model.Contestant{},
+	)
 }

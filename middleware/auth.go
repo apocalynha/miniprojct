@@ -39,7 +39,17 @@ func ExtractTokenUserRole(e echo.Context) string {
 		role := claims["role"].(string)
 		return role
 	}
-	return "customer"
+	return "user"
+}
+
+func ExtractTokenUserId(e echo.Context) int {
+	user := e.Get("user").(*jwt.Token)
+	if user.Valid {
+		claims := user.Claims.(jwt.MapClaims)
+		userId := claims["userId"].(float64)
+		return int(userId)
+	}
+	return 0
 }
 
 func HashPassword(password string) string {
