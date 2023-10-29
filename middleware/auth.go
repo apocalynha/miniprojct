@@ -13,7 +13,7 @@ import (
 )
 
 func JWTMiddleware() echo.MiddlewareFunc {
-	SecretKey := os.Getenv("JWT_KEY")
+	SecretKey := os.Getenv("JWTSECRET")
 	return echojwt.WithConfig(echojwt.Config{
 		SigningKey:    []byte(SecretKey),
 		SigningMethod: "HS256",
@@ -21,7 +21,7 @@ func JWTMiddleware() echo.MiddlewareFunc {
 }
 
 func CreateToken(userId int, name, role string) (string, error) {
-	SecretKey := os.Getenv("JWT_KEY")
+	SecretKey := os.Getenv("JWTSECRET")
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
 	claims["userId"] = userId
