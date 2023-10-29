@@ -14,6 +14,7 @@ type ShowNewsResponse struct {
 	}
 	Tittle  string `json:"tittle" `
 	Content string `json:"content"`
+	Photo   string `json:"photo"`
 }
 
 func GetNewsResponse(news model.News) ShowNewsResponse {
@@ -22,6 +23,7 @@ func GetNewsResponse(news model.News) ShowNewsResponse {
 		UpdatedAt: news.UpdatedAt.String(),
 		Tittle:    news.Tittle,
 		Content:   news.Content,
+		Photo:     news.Photo,
 	}
 	response.User.Name = news.User.Name
 	response.User.Role = news.User.Role

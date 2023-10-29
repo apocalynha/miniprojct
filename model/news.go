@@ -10,4 +10,5 @@ type News struct {
 	User    User   `json:"user" gorm:"foreignkey:UserID"` // Explicitly define the foreign key
 	Tittle  string `json:"tittle" form:"tittle"`
 	Content string `json:"content" form:"content"`
+	Photo   string `json:"photo" form:"photo"`
 }
