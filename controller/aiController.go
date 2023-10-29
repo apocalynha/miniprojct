@@ -15,7 +15,7 @@ import (
 )
 
 func GetContestRecommendation(c echo.Context) error {
-	OpenAI_Key := os.Getenv("API_OPENAI")
+	OpenAI_Key := os.Getenv("APIOPENAI")
 
 	role := middleware.ExtractTokenUserRole(c)
 	if role != "admin" {
@@ -66,7 +66,7 @@ func GetContestRecommendation(c echo.Context) error {
 }
 
 func GetContestExplanation(c echo.Context) error {
-	OpenAI_Key := os.Getenv("API_OPENAI")
+	OpenAI_Key := os.Getenv("APIOPENAI")
 
 	role := middleware.ExtractTokenUserRole(c)
 	if role != "admin" {
