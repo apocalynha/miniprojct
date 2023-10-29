@@ -41,22 +41,8 @@ func CreateContestant(c echo.Context) error {
 	NewContestant.Contest = contest
 
 	// Check the Gender and Category requirements
-	if contest.ReqGender != "Bebas" {
-		if contest.ReqGender != NewContestant.Gender {
-			return c.JSON(http.StatusBadRequest, utils.ErrorResponse("Sorry, Gender do not match with the requirements of the Contest"))
-		}
-	}
-
-	Age := NewContestant.Age
-
-	if Age < 0 {
-		return c.JSON(http.StatusBadRequest, utils.ErrorResponse("Age cannot be less than 0"))
-	}
-
-	NewContestant.Category = getCategoryByAge(Age)
-
-	if contest.ReqCategory != NewContestant.Category {
-		return c.JSON(http.StatusBadRequest, utils.ErrorResponse("Sorry, Category do not match with the requirements of the Contest"))
+	if err := utils.CheckGenderAndCategoryRequirements(contest, NewContestant); err != nil {
+		return c.JSON(http.StatusBadRequest, utils.ErrorResponse(err.Error()))
 	}
 
 	// Save the contestant to the database
@@ -119,55 +105,49 @@ func GetContestantID(c echo.Context) error {
 
 // Update Contestant
 func UpdateContestant(c echo.Context) error {
-	IdParam := c.Param("id")
-	id, err := strconv.Atoi(IdParam)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid Contestant ID"))
+	var UpdatedContestant model.Contestant
+	if err := c.Bind(&UpdatedContestant); err != nil {
+		return c.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid request body"))
 	}
+
+	ContestantID, _ := strconv.Atoi(c.Param("id"))
 
 	role := middleware.ExtractTokenUserRole(c)
 	if role != "admin" {
 		return c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Permission denied"))
 	}
 
-	var contestant model.Contestant
-	result := config.DB.Preload("User").Preload("Contest").First(&contestant, id)
-	if result.Error != nil {
+	ExistingContestant := model.Contestant{}
+	if err := config.DB.First(&ExistingContestant, ContestantID).Error; err != nil {
 		return c.JSON(http.StatusNotFound, utils.ErrorResponse("Contestant not found"))
 	}
 
-	c.Bind(&contestant)
+	ExistingContestant.ContestantName = UpdatedContestant.ContestantName
+	ExistingContestant.ContestID = UpdatedContestant.ContestID
+	ExistingContestant.Gender = UpdatedContestant.Gender
+	ExistingContestant.Age = UpdatedContestant.Age
 
+	// Fetch the contest based on the contest_id
 	var contest model.Contest
-	if err := config.DB.First(&contest, contestant.ContestID).Error; err != nil {
+	if err := config.DB.First(&contest, ExistingContestant.ContestID).Error; err != nil {
 		return c.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid Contest ID"))
 	}
 
-	if contest.ReqGender != "Bebas" {
-		if contest.ReqGender != contestant.Gender {
-			return c.JSON(http.StatusBadRequest, utils.ErrorResponse("Sorry, Gender do not match with the requirements of the Contest"))
-		}
-	}
-
-	Age := contestant.Age
-
-	if Age < 0 {
-		return c.JSON(http.StatusBadRequest, utils.ErrorResponse("Age cannot be less than 0"))
-	}
-
-	contestant.Category = getCategoryByAge(Age)
-
-	if contest.ReqCategory != contestant.Category {
-		return c.JSON(http.StatusBadRequest, utils.ErrorResponse("Sorry, Category do not match with the requirements of the Contest"))
-	}
-
-	if err := config.DB.Save(&contestant).Error; err != nil {
+	// Check the Gender and Category requirements
+	if err := utils.CheckGenderAndCategoryRequirements(contest, ExistingContestant); err != nil {
 		return c.JSON(http.StatusBadRequest, utils.ErrorResponse(err.Error()))
 	}
 
-	config.DB.Preload("User").Preload("Contest").First(&contestant, id)
+	if err := config.DB.Save(&ExistingContestant).Error; err != nil {
+		return c.JSON(http.StatusBadRequest, utils.ErrorResponse(err.Error()))
+	}
 
-	response := utils.GetContestantResponse(contestant)
+	var result model.Contestant
+	if err := config.DB.Preload("User").Preload("Contest").First(&result, ContestantID).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, utils.ErrorResponse("Failed to fetch Contestant ID"))
+	}
+
+	response := utils.GetContestantResponse(result)
 
 	return c.JSON(http.StatusOK, utils.SuccessResponse("Success update contestant", response))
 }
@@ -197,14 +177,4 @@ func DeleteContestant(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"message": "success delete contestant",
 	})
-}
-
-func getCategoryByAge(age int) string {
-	if age <= 15 {
-		return "Anak"
-	} else if age > 15 && age <= 25 {
-		return "Remaja"
-	} else {
-		return "Dewasa"
-	}
 }

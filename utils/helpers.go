@@ -2,6 +2,7 @@ package utils
 
 import (
 	"app/model"
+	"errors"
 	"time"
 )
 
@@ -87,4 +88,33 @@ func GetContestantResponse(contestant model.Contestant) ShowContestantResponse {
 	response.Contest.ReqCategory = contestant.Contest.ReqCategory
 
 	return response
+}
+
+// CheckGenderAndCategoryRequirements memeriksa persyaratan gender dan kategori
+func CheckGenderAndCategoryRequirements(contest model.Contest, contestant model.Contestant) error {
+	if contest.ReqGender != "Bebas" && contest.ReqGender != contestant.Gender {
+		return errors.New("Sorry, Gender do not match with the requirements of the Contest")
+	}
+
+	Age := contestant.Age
+	if Age < 0 {
+		return errors.New("Age cannot be less than 0")
+	}
+
+	category := getCategoryByAge(Age)
+	if contest.ReqCategory != category {
+		return errors.New("Sorry, Category do not match with the requirements of the Contest")
+	}
+
+	return nil
+}
+
+func getCategoryByAge(age int) string {
+	if age <= 15 {
+		return "Anak"
+	} else if age > 15 && age <= 25 {
+		return "Remaja"
+	} else {
+		return "Dewasa"
+	}
 }
