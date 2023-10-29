@@ -20,29 +20,26 @@ func CreateNews(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Permission denied"))
 	}
 
-	// Parse the request body into a Blog struct
-	var newNews model.News
-	if err := c.Bind(&newNews); err != nil {
+	var NewNews model.News
+	if err := c.Bind(&NewNews); err != nil {
 		return c.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid request body"))
 	}
 
-	// Fetch the user based on the users_id
 	var user model.User
 	if err := config.DB.First(&user, userId).Error; err != nil {
 		return c.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid User ID"))
 	}
 
-	// Associate the user with the blog
-	newNews.User = user
+	NewNews.User = user
 
-	// Save the blog post to the database
-	result := config.DB.Create(&newNews)
+	result := config.DB.Create(&NewNews)
 	if result.Error != nil {
 		return c.JSON(http.StatusInternalServerError, utils.ErrorResponse("Failed to create blog post"))
 	}
 
-	// Return the created blog post as JSON response
-	return c.JSON(http.StatusCreated, utils.SuccessResponse("Success Created Data", newNews.ResponseConvert()))
+	response := utils.GetNewsResponse(NewNews)
+
+	return c.JSON(http.StatusCreated, utils.SuccessResponse("Success Created Data", response))
 }
 
 // Get All News
@@ -54,22 +51,22 @@ func GetNews(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, utils.ErrorResponse("Failed to fetch news"))
 	}
 
-	var responseList []utils.ShowNewsResponse
+	var ResponseList []utils.ShowNewsResponse
 	for _, n := range news {
 		response := utils.GetNewsResponse(n)
-		responseList = append(responseList, response)
+		ResponseList = append(ResponseList, response)
 	}
 
-	return c.JSON(http.StatusOK, utils.SuccessResponse("Success get all news", responseList))
+	return c.JSON(http.StatusOK, utils.SuccessResponse("Success get all news", ResponseList))
 }
 
 // Get news by id
 func GetNewsID(c echo.Context) error {
-	userID, _ := strconv.Atoi(c.Param("id"))
+	NewsID, _ := strconv.Atoi(c.Param("id"))
 
 	// Fetch the blogs by their ID from the database using GORM
 	var news model.News
-	result := config.DB.Preload("User").First(&news, userID)
+	result := config.DB.Preload("User").First(&news, NewsID)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
 			return c.JSON(http.StatusNotFound, utils.ErrorResponse("News ID Not Found"))
@@ -77,27 +74,15 @@ func GetNewsID(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, utils.ErrorResponse("Failed to fetch News ID"))
 	}
 
-	response := utils.ShowNewsResponse{
-		ID:        news.ID,
-		UpdatedAt: news.UpdatedAt.String(),
-		User: struct {
-			Name string `json:"name"`
-			Role string `json:"role"`
-		}{
-			Name: news.User.Name,
-			Role: news.User.Role,
-		},
-		Tittle:  news.Tittle,
-		Content: news.Content,
-	}
+	response := utils.GetNewsResponse(news)
 
 	return c.JSON(http.StatusOK, utils.SuccessResponse("Success get news by ID", response))
 }
 
 // Update News
 func UpdateNews(c echo.Context) error {
-	idParam := c.Param("id")
-	id, err := strconv.Atoi(idParam)
+	IdParam := c.Param("id")
+	id, err := strconv.Atoi(IdParam)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid news ID")
 	}
@@ -108,7 +93,7 @@ func UpdateNews(c echo.Context) error {
 	}
 
 	var news model.News
-	if err := config.DB.First(&news, id).Error; err != nil {
+	if err := config.DB.Preload("User").First(&news, id).Error; err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "News not found")
 	}
 
@@ -117,16 +102,13 @@ func UpdateNews(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"message": "success update blog",
-		"blog":    news,
-	})
+	return c.JSON(http.StatusOK, utils.SuccessResponse("Success update blog", utils.GetNewsResponse(news)))
 }
 
 // Delete News
 func DeleteNews(c echo.Context) error {
-	idParam := c.Param("id")
-	id, err := strconv.Atoi(idParam)
+	IdParam := c.Param("id")
+	id, err := strconv.Atoi(IdParam)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid news ID")
 	}
