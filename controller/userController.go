@@ -56,6 +56,12 @@ func Register(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid request body"))
 	}
 
+	ExistingUser := model.User{}
+	if err := config.DB.Where("email = ?", user.Email).First(&ExistingUser).Error; err == nil {
+		// Email already exists, return an error response
+		return c.JSON(http.StatusConflict, utils.ErrorResponse("Email already registered"))
+	}
+
 	userDb := req.PassBody(user)
 
 	// Hash the user's password before storing it
@@ -126,6 +132,16 @@ func UpdateUser(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, utils.ErrorResponse("Failed to retrieve user"))
 	}
 
+	// Check Email
+	if updatedUser.Email != existingUser.Email {
+		existingUserWithEmail := model.User{}
+		if err := config.DB.Where("email = ?", updatedUser.Email).First(&existingUserWithEmail).Error; err == nil {
+			// Email already exists, return an error response
+			return c.JSON(http.StatusConflict, utils.ErrorResponse("Email already in use"))
+		}
+	}
+
+	// Check Password
 	if updatedUser.Password != "" {
 		// Hash new password
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(updatedUser.Password), bcrypt.DefaultCost)
