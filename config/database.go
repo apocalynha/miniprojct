@@ -46,5 +46,6 @@ func InitMigrate() {
 		&model.User{},
 		&model.News{},
 		&model.Contest{},
+		&model.Contestant{},
 	)
 }
