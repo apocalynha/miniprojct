@@ -21,42 +21,48 @@ func Init() *echo.Echo {
 		return c.String(http.StatusOK, "Welcome to RESTful API Services")
 	})
 
-	// Authenticated
-	eAuth := e.Group("")
-	eAuth.Use(echojwt.JWT([]byte(SecretKey)))
-
 	// user
+	users := e.Group("/users")
+	users.Use(echojwt.JWT([]byte(SecretKey)))
 	e.POST("/users/register", controller.Register)
 	e.POST("/users/login", controller.Login)
-	eAuth.GET("/users", controller.GetAllUser)
-	eAuth.GET("/users/:id", controller.GetUserByID)
-	eAuth.PUT("/users/:id", controller.UpdateUser)
-	eAuth.DELETE("/users/:id", controller.DeleteUser)
+	users.GET("", controller.GetAllUser)
+	users.GET("/users/:id", controller.GetUserByID)
+	users.PUT("/users/:id", controller.UpdateUser)
+	users.DELETE("/users/:id", controller.DeleteUser)
 
 	// news
+	news := e.Group("/news")
+	news.Use(echojwt.JWT([]byte(SecretKey)))
 	e.GET("/news", controller.GetNews)
 	e.GET("/news/:id", controller.GetNewsID)
-	eAuth.POST("/news/create", controller.CreateNews)
-	eAuth.PUT("/news/:id", controller.UpdateNews)
-	eAuth.DELETE("/news/:id", controller.DeleteNews)
+	news.POST("", controller.CreateNews)
+	news.PUT("/:id", controller.UpdateNews)
+	news.DELETE("/:id", controller.DeleteNews)
 
 	// contest
+	contest := e.Group("/contest")
+	contest.Use(echojwt.JWT([]byte(SecretKey)))
 	e.GET("/contest", controller.GetContests)
 	e.GET("/contest/:id", controller.GetContestID)
-	eAuth.POST("/contest/create", controller.CreateContest)
-	eAuth.PUT("/contest/:id", controller.UpdateContest)
-	eAuth.DELETE("/contest/:id", controller.DeleteContest)
+	contest.POST("", controller.CreateContest)
+	contest.PUT("/:id", controller.UpdateContest)
+	contest.DELETE("/:id", controller.DeleteContest)
 
 	// contestant
-	eAuth.GET("/contestant", controller.GetContestants)
-	eAuth.GET("/contestant/:id", controller.GetContestantID)
-	eAuth.POST("/contestant/create", controller.CreateContestant)
-	eAuth.PUT("/contestant/:id", controller.UpdateContestant)
-	eAuth.DELETE("/contestant/:id", controller.DeleteContestant)
+	contestant := e.Group("/contestant")
+	contestant.Use(echojwt.JWT([]byte(SecretKey)))
+	contestant.GET("", controller.GetContestants)
+	contestant.GET("/:id", controller.GetContestantID)
+	contestant.POST("", controller.CreateContestant)
+	contestant.PUT("/:id", controller.UpdateContestant)
+	contestant.DELETE("/:id", controller.DeleteContestant)
 
 	// ai
-	eAuth.POST("/contest-explanation", controller.GetContestExplanation)
-	eAuth.POST("/contest-recommend", controller.GetContestRecommendation)
+	ai := e.Group("")
+	ai.Use(echojwt.JWT([]byte(SecretKey)))
+	ai.POST("/contest-explanation", controller.GetContestExplanation)
+	ai.POST("/contest-recommend", controller.GetContestRecommendation)
 
 	return e
 
